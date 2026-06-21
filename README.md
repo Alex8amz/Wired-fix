@@ -18,16 +18,10 @@ irm "https://raw.githubusercontent.com/Alex8amz/Wired-fix/main/WiredNet_GUI.ps1"
 Acepta el aviso de permisos de administrador (UAC) y espera a que abra
 la ventana de WiredNet.
 
-> Para los pasos de publicación y configuración de esta URL, ver
-> [`PUBLICAR_EN_GITHUB.md`](PUBLICAR_EN_GITHUB.md).
-
 ## Uso local (clonando el repositorio)
 
 ```powershell
-git clone https://github.com/TU_USUARIO/TU_REPOSITORIO.git
-cd TU_REPOSITORIO
-.\Iniciar_WiredNet_GUI.bat
-```
+git clone https://https://github.com/Alex8amz/Wired-fix.git
 
 ## Funciones
 
