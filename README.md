@@ -59,8 +59,7 @@ cd TU_REPOSITORIO
 ├── WiredNet_GUI.ps1            # Script principal (interfaz + lógica)
 ├── Iniciar_WiredNet_GUI.bat    # Lanzador para uso local
 ├── LOGO_WIRED.png              # Logo de la empresa
-├── README.md                   # Este archivo
-└── PUBLICAR_EN_GITHUB.md       # Guía de publicación / instalación remota
+└── README.md                   # Este archivo
 ```
 
 ## Requisitos
