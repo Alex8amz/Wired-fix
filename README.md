@@ -54,6 +54,7 @@ git clone https://https://github.com/Alex8amz/Wired-fix.git
 ├── Iniciar_WiredNet_GUI.bat    # Lanzador para uso local
 ├── LOGO_WIRED.png              # Logo de la empresa
 └── README.md                   # Este archivo
+
 ```
 
 ## Requisitos
