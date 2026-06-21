@@ -12,7 +12,7 @@ vivo, y una sección de información de la empresa.
 Abre **PowerShell** en Windows y pega:
 
 ```powershell
-irm "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/WiredNet_GUI.ps1" | iex
+irm "https://raw.githubusercontent.com/Alex8amz/Wired-fix/main/WiredNet_GUI.ps1" | iex
 ```
 
 Acepta el aviso de permisos de administrador (UAC) y espera a que abra
