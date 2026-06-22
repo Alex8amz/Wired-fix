@@ -401,15 +401,6 @@ if ($scriptDir) {
                             </WrapPanel>
                         </StackPanel>
                     </Border>
-
-                    <Border Style="{StaticResource GroupBoxStyle}">
-                        <StackPanel>
-                            <TextBlock Text="EXPORTAR" Foreground="#7C8A99" FontSize="11" FontWeight="Bold" Margin="0,0,0,10"/>
-                            <WrapPanel>
-                                <Button x:Name="btnExportarReporte" Content="📄 Exportar Reporte Completo al Escritorio" Width="690" Style="{StaticResource ActionButtonStyle}"/>
-                            </WrapPanel>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
             </ScrollViewer>
 
