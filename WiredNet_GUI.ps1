@@ -171,15 +171,17 @@ if ($scriptDir) {
             <RowDefinition Height="300"/>
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Background="#0D1B2A" Padding="22,16" BorderBrush="#1B2733" BorderThickness="0,0,0,2">
+        <Border Grid.Row="0" Background="#0D1B2A" Padding="22,14" BorderBrush="#1B2733" BorderThickness="0,0,0,2">
             <DockPanel>
                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center" DockPanel.Dock="Left">
-                    <Border CornerRadius="8" Background="#0A141F" Padding="4" Margin="0,0,14,0">
-                        <Image x:Name="imgLogo" Width="44" Height="44"/>
+                    <Border CornerRadius="12" Background="#0A141F" Padding="6" Margin="0,0,16,0"
+                            BorderBrush="#2D9CDB" BorderThickness="1">
+                        <Image x:Name="imgLogo" Width="64" Height="64"
+                               RenderOptions.BitmapScalingMode="HighQuality"/>
                     </Border>
                     <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="WiredNet" FontSize="24" FontWeight="Bold" Foreground="#2D9CDB"/>
-                        <TextBlock Text="Soporte Tecnico · Diagnostico y Reparacion de Red" Foreground="#8A96A3" FontSize="11"/>
+                        <TextBlock Text="WiredNet" FontSize="28" FontWeight="Bold" Foreground="#2D9CDB"/>
+                        <TextBlock Text="Soporte Tecnico · Diagnostico y Reparacion de Red" Foreground="#8A96A3" FontSize="12"/>
                     </StackPanel>
                 </StackPanel>
                 <WrapPanel HorizontalAlignment="Right" VerticalAlignment="Center">
