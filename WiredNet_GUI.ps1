@@ -13,7 +13,7 @@ function Test-Admin {
 }
 
 # URL del instalador de una linea (irm | iex). Se actualiza el placeholder al subir a GitHub.
-$wiredNetRemoteUrl = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/WiredNet_GUI.ps1"
+$wiredNetRemoteUrl = "https://raw.githubusercontent.com/Alex8amz/Wired-fix/main/WiredNet_GUI.ps1"
 
 if (-not (Test-Admin)) {
     try {
@@ -40,7 +40,7 @@ if (-not (Test-Admin)) {
 $scriptDir = if ($PSScriptRoot) { $PSScriptRoot } else { $null }
 
 # URL "raw" del logo en GitHub (se usa solo si el script corre remoto, vía irm/iex)
-$logoUrlRemoto = "https://raw.githubusercontent.com/TU_USUARIO/TU_REPOSITORIO/main/LOGO_WIRED.png"
+$logoUrlRemoto = "https://raw.githubusercontent.com/Alex8amz/Wired-fix/main/LOGO_WIRED.png"
 
 if ($scriptDir) {
     # Ejecucion local: el logo deberia estar junto al .ps1
@@ -199,6 +199,12 @@ if ($scriptDir) {
                     <WrapPanel>
                         <Button x:Name="btnIpconfig" Content="Ver Adaptadores de Red (ipconfig /all)" Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnNetstat" Content="Ver Conexiones Activas (netstat)" Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnArp" Content="Ver Tabla ARP" Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnRoute" Content="Ver Tabla de Enrutamiento" Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnWifiPerfiles" Content="Ver Redes Wi-Fi Guardadas" Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnWifiEscanear" Content="Escanear Redes Wi-Fi Cercanas" Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnVelocidad" Content="Probar Velocidad de Internet" Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnPuertosAbiertos" Content="Ver Puertos en Escucha" Width="320" Style="{StaticResource ActionButtonStyle}"/>
                     </WrapPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
                         <TextBlock Text="Host / IP:" Style="{StaticResource LabelStyle}"/>
@@ -214,6 +220,12 @@ if ($scriptDir) {
                         <TextBlock Text="Dominio:" Style="{StaticResource LabelStyle}"/>
                         <TextBox x:Name="txtDominio" Text="google.com" Width="150" Style="{StaticResource InputStyle}"/>
                         <Button x:Name="btnNslookup" Content="Consultar DNS" Width="150" Margin="10,0,0,0" Style="{StaticResource ActionButtonStyle}"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                        <TextBlock Text="Host / Puerto:" Style="{StaticResource LabelStyle}"/>
+                        <TextBox x:Name="txtTestHost" Text="google.com" Width="150" Style="{StaticResource InputStyle}"/>
+                        <TextBox x:Name="txtTestPuerto" Text="443" Width="60" Margin="6,0,0,0" Style="{StaticResource InputStyle}"/>
+                        <Button x:Name="btnTestPuerto" Content="Probar Puerto (Test-NetConnection)" Width="260" Margin="10,0,0,0" Style="{StaticResource ActionButtonStyle}"/>
                     </StackPanel>
                 </StackPanel>
             </ScrollViewer>
@@ -238,6 +250,9 @@ if ($scriptDir) {
                         <Button x:Name="btnTcpIpReset" Content="Reiniciar Pila TCP/IP" Width="220" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnFirewallReset" Content="Restablecer Firewall" Width="220" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnProxyReset" Content="Restablecer Proxy" Width="220" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnDnsGoogle" Content="Usar DNS de Google (8.8.8.8)" Width="220" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnDnsCloudflare" Content="Usar DNS de Cloudflare (1.1.1.1)" Width="220" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnDnsAutomatico" Content="Restaurar DNS Automatico (DHCP)" Width="220" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnRestartAdaptador" Content="Reiniciar Adaptador Seleccionado" Width="460" Style="{StaticResource ActionButtonStyle}"/>
                     </WrapPanel>
                 </StackPanel>
@@ -308,12 +323,21 @@ $scrollWin                 = $window.FindName("scrollWin")
 $scrollInfo                = $window.FindName("scrollInfo")
 $btnIpconfig               = $window.FindName("btnIpconfig")
 $btnNetstat                = $window.FindName("btnNetstat")
+$btnArp                    = $window.FindName("btnArp")
+$btnRoute                  = $window.FindName("btnRoute")
+$btnWifiPerfiles           = $window.FindName("btnWifiPerfiles")
+$btnWifiEscanear           = $window.FindName("btnWifiEscanear")
+$btnVelocidad              = $window.FindName("btnVelocidad")
+$btnPuertosAbiertos        = $window.FindName("btnPuertosAbiertos")
 $txtPingHost               = $window.FindName("txtPingHost")
 $btnPing                   = $window.FindName("btnPing")
 $txtTracertHost            = $window.FindName("txtTracertHost")
 $btnTracert                = $window.FindName("btnTracert")
 $txtDominio                = $window.FindName("txtDominio")
 $btnNslookup               = $window.FindName("btnNslookup")
+$txtTestHost               = $window.FindName("txtTestHost")
+$txtTestPuerto             = $window.FindName("txtTestPuerto")
+$btnTestPuerto             = $window.FindName("btnTestPuerto")
 $cmbAdaptador              = $window.FindName("cmbAdaptador")
 $btnRefrescarAdaptadores   = $window.FindName("btnRefrescarAdaptadores")
 $btnDhcp                   = $window.FindName("btnDhcp")
@@ -325,6 +349,9 @@ $btnWinsock                = $window.FindName("btnWinsock")
 $btnTcpIpReset             = $window.FindName("btnTcpIpReset")
 $btnFirewallReset          = $window.FindName("btnFirewallReset")
 $btnProxyReset             = $window.FindName("btnProxyReset")
+$btnDnsGoogle              = $window.FindName("btnDnsGoogle")
+$btnDnsCloudflare          = $window.FindName("btnDnsCloudflare")
+$btnDnsAutomatico          = $window.FindName("btnDnsAutomatico")
 $btnRestartAdaptador       = $window.FindName("btnRestartAdaptador")
 $btnSfc                    = $window.FindName("btnSfc")
 $btnDism                   = $window.FindName("btnDism")
@@ -361,9 +388,11 @@ $ledReadyBrush   = New-Object System.Windows.Media.SolidColorBrush ([System.Wind
 $ledRunningBrush = New-Object System.Windows.Media.SolidColorBrush ([System.Windows.Media.Color]::FromRgb(245,166,35))
 
 $script:actionButtons = @(
-    $btnIpconfig, $btnNetstat, $btnPing, $btnTracert, $btnNslookup,
+    $btnIpconfig, $btnNetstat, $btnArp, $btnRoute, $btnWifiPerfiles, $btnWifiEscanear, $btnVelocidad, $btnPuertosAbiertos,
+    $btnPing, $btnTracert, $btnNslookup, $btnTestPuerto,
     $btnRefrescarAdaptadores, $btnDhcp, $btnLiberar, $btnRenovar, $btnFlushDns, $btnResetTotal,
-    $btnWinsock, $btnTcpIpReset, $btnFirewallReset, $btnProxyReset, $btnRestartAdaptador,
+    $btnWinsock, $btnTcpIpReset, $btnFirewallReset, $btnProxyReset,
+    $btnDnsGoogle, $btnDnsCloudflare, $btnDnsAutomatico, $btnRestartAdaptador,
     $btnSfc, $btnDism, $btnChkdsk, $btnTemporales, $btnReiniciarServicios,
     $btnSitioWeb
 )
@@ -448,6 +477,51 @@ $btnIpconfig.Add_Click({
 $btnNetstat.Add_Click({
     Invoke-WiredNetCommand -Title "netstat -ano" -ScriptBlock { netstat -ano }
 })
+$btnArp.Add_Click({
+    Invoke-WiredNetCommand -Title "arp -a" -ScriptBlock { arp -a }
+})
+$btnRoute.Add_Click({
+    Invoke-WiredNetCommand -Title "route print" -ScriptBlock { route print }
+})
+$btnWifiPerfiles.Add_Click({
+    Invoke-WiredNetCommand -Title "netsh wlan show profiles" -ScriptBlock {
+        netsh wlan show profiles
+    }
+})
+$btnWifiEscanear.Add_Click({
+    Invoke-WiredNetCommand -Title "netsh wlan show networks" -ScriptBlock {
+        netsh wlan show networks mode=bssid
+    }
+})
+$btnVelocidad.Add_Click({
+    Invoke-WiredNetCommand -Title "Prueba de velocidad" -ScriptBlock {
+        # Descarga un archivo de prueba y mide el tiempo, sin depender de servicios de terceros con API key
+        $url = "https://speed.cloudflare.com/__down?bytes=25000000"
+        $destino = Join-Path $env:TEMP "wirednet_speedtest.tmp"
+        try {
+            $inicio = Get-Date
+            Invoke-WebRequest -Uri $url -OutFile $destino -UseBasicParsing
+            $fin = Get-Date
+            $segundos = ($fin - $inicio).TotalSeconds
+            $bytes = (Get-Item $destino).Length
+            $mbps = [math]::Round((($bytes * 8) / $segundos) / 1MB, 2)
+            "Descarga: $([math]::Round($bytes/1MB,1)) MB en $([math]::Round($segundos,2)) s"
+            "Velocidad aproximada: $mbps Mbps"
+        } catch {
+            "No se pudo completar la prueba de velocidad: $($_.Exception.Message)"
+        } finally {
+            Remove-Item $destino -Force -ErrorAction SilentlyContinue
+        }
+    }
+})
+$btnPuertosAbiertos.Add_Click({
+    Invoke-WiredNetCommand -Title "Puertos en escucha" -ScriptBlock {
+        Get-NetTCPConnection -State Listen |
+            Sort-Object LocalPort |
+            Select-Object LocalAddress, LocalPort, OwningProcess |
+            Format-Table -AutoSize | Out-String -Width 200
+    }
+})
 $btnPing.Add_Click({
     $hostVal = $txtPingHost.Text
     if ([string]::IsNullOrWhiteSpace($hostVal)) { $hostVal = "8.8.8.8" }
@@ -462,6 +536,16 @@ $btnNslookup.Add_Click({
     $domVal = $txtDominio.Text
     if ([string]::IsNullOrWhiteSpace($domVal)) { $domVal = "google.com" }
     Invoke-WiredNetCommand -Title "nslookup $domVal" -ScriptBlock { param($d) nslookup $d } -ArgumentList $domVal
+})
+$btnTestPuerto.Add_Click({
+    $hostVal = $txtTestHost.Text
+    $puertoVal = $txtTestPuerto.Text
+    if ([string]::IsNullOrWhiteSpace($hostVal)) { $hostVal = "google.com" }
+    if ([string]::IsNullOrWhiteSpace($puertoVal)) { $puertoVal = "443" }
+    Invoke-WiredNetCommand -Title "Test-NetConnection $hostVal -Port $puertoVal" -ScriptBlock {
+        param($h, $p)
+        Test-NetConnection -ComputerName $h -Port [int]$p | Format-List
+    } -ArgumentList $hostVal, $puertoVal
 })
 
 # ---------- Eventos: Reparacion de Red ----------
@@ -536,6 +620,38 @@ $btnFirewallReset.Add_Click({
 
 $btnProxyReset.Add_Click({
     Invoke-WiredNetCommand -Title "netsh winhttp reset proxy" -ScriptBlock { netsh winhttp reset proxy }
+})
+
+$btnDnsGoogle.Add_Click({
+    $adaptador = $cmbAdaptador.SelectedItem
+    if (-not $adaptador) { [System.Windows.MessageBox]::Show("Seleccione un adaptador primero.", "WiredNet") | Out-Null; return }
+    Invoke-WiredNetCommand -Title "DNS de Google en $adaptador" -ScriptBlock {
+        param($a)
+        netsh interface ip set dns name="$a" static 8.8.8.8 primary
+        netsh interface ip add dns name="$a" 8.8.4.4 index=2
+        "DNS de Google (8.8.8.8 / 8.8.4.4) configurado en $a"
+    } -ArgumentList $adaptador
+})
+
+$btnDnsCloudflare.Add_Click({
+    $adaptador = $cmbAdaptador.SelectedItem
+    if (-not $adaptador) { [System.Windows.MessageBox]::Show("Seleccione un adaptador primero.", "WiredNet") | Out-Null; return }
+    Invoke-WiredNetCommand -Title "DNS de Cloudflare en $adaptador" -ScriptBlock {
+        param($a)
+        netsh interface ip set dns name="$a" static 1.1.1.1 primary
+        netsh interface ip add dns name="$a" 1.0.0.1 index=2
+        "DNS de Cloudflare (1.1.1.1 / 1.0.0.1) configurado en $a"
+    } -ArgumentList $adaptador
+})
+
+$btnDnsAutomatico.Add_Click({
+    $adaptador = $cmbAdaptador.SelectedItem
+    if (-not $adaptador) { [System.Windows.MessageBox]::Show("Seleccione un adaptador primero.", "WiredNet") | Out-Null; return }
+    Invoke-WiredNetCommand -Title "DNS automatico en $adaptador" -ScriptBlock {
+        param($a)
+        netsh interface ip set dns name="$a" source=dhcp
+        "DNS automatico (DHCP) restaurado en $a"
+    } -ArgumentList $adaptador
 })
 
 $btnRestartAdaptador.Add_Click({
