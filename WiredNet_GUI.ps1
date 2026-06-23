@@ -190,6 +190,69 @@ if ($scriptDir) {
             <Setter Property="Margin" Value="0,0,0,14"/>
         </Style>
 
+        <Style x:Key="DarkComboBoxStyle" TargetType="ComboBox">
+            <Setter Property="Background" Value="#1C2130"/>
+            <Setter Property="Foreground" Value="#D0D8E8"/>
+            <Setter Property="BorderBrush" Value="#00C8FF"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,5"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <Border Background="{TemplateBinding Background}"
+                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                    BorderThickness="{TemplateBinding BorderThickness}"
+                                    CornerRadius="4">
+                                <Grid>
+                                    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
+                                                      Margin="8,0,28,0"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Left"
+                                                      TextBlock.Foreground="#D0D8E8"/>
+                                    <Path Data="M 0 0 L 6 6 L 12 0 Z"
+                                          Fill="#00C8FF" Width="12" Height="6"
+                                          HorizontalAlignment="Right" VerticalAlignment="Center"
+                                          Margin="0,0,10,0"/>
+                                </Grid>
+                            </Border>
+                            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True" Placement="Bottom"
+                                   MinWidth="{TemplateBinding ActualWidth}">
+                                <Border Background="#1C2130" BorderBrush="#00C8FF"
+                                        BorderThickness="1" CornerRadius="0,0,4,4">
+                                    <ScrollViewer MaxHeight="200">
+                                        <ItemsPresenter/>
+                                    </ScrollViewer>
+                                </Border>
+                            </Popup>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#1C2130"/>
+                        <Setter Property="Foreground" Value="#D0D8E8"/>
+                        <Setter Property="Padding" Value="10,7"/>
+                        <Setter Property="BorderThickness" Value="0"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#00C8FF"/>
+                                <Setter Property="Foreground" Value="#0A0E18"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#163A4E"/>
+                                <Setter Property="Foreground" Value="#00C8FF"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
     </Window.Resources>
 
     <Grid Background="#0D1117">
@@ -291,7 +354,7 @@ if ($scriptDir) {
                         <Button x:Name="btnTemperatura"    Content="🌡 Temperatura del Sistema"        Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnBateria"        Content="🔋 Estado de Bateria"              Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnAntivirus"      Content="🛡 Estado del Antivirus"           Width="320" Style="{StaticResource ActionButtonStyle}"/>
-                        <Button x:Name="btnExportarReporte" Content="📄 Exportar Reporte Completo (.txt)" Width="660" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnExportarReporte" Content="📄 Exportar Reporte Completo (PDF)" Width="660" Style="{StaticResource ActionButtonStyle}"/>
                     </WrapPanel>
                 </StackPanel>
             </ScrollViewer>
@@ -306,8 +369,7 @@ if ($scriptDir) {
                             <TextBlock Text="Adaptador de red" Foreground="#7C8A99" FontSize="11" Margin="0,0,0,6"/>
                             <StackPanel Orientation="Horizontal">
                                 <ComboBox x:Name="cmbAdaptador" Width="280" Margin="0,0,10,0"
-                                          Background="#1F2937" Foreground="White"
-                                          BorderBrush="#2D9CDB" BorderThickness="1" Padding="6,4"/>
+                                          Style="{StaticResource DarkComboBoxStyle}"/>
                                 <Button x:Name="btnRefrescarAdaptadores" Content="↻ Actualizar" Width="130" Style="{StaticResource ActionButtonStyle}"/>
                             </StackPanel>
                         </StackPanel>
@@ -964,79 +1026,208 @@ $btnAntivirus.Add_Click({
     }
 })
 $btnExportarReporte.Add_Click({
-    Invoke-WiredNetCommand -Title "Exportar reporte completo" -ScriptBlock {
+    Invoke-WiredNetCommand -Title "Exportar Reporte PDF" -ScriptBlock {
         $fecha    = Get-Date -Format "yyyy-MM-dd_HH-mm"
-        $archivo  = "$env:USERPROFILE\Desktop\WiredNet_Reporte_$fecha.txt"
-        $os       = Get-CimInstance Win32_OperatingSystem
-        $cs       = Get-CimInstance Win32_ComputerSystem
-        $cpu      = Get-CimInstance Win32_Processor | Select-Object -First 1
-        $ram      = [math]::Round($cs.TotalPhysicalMemory / 1GB, 2)
-        $ramLibre = [math]::Round($os.FreePhysicalMemory / 1MB, 2)
-        $boot     = $os.LastBootUpTime
-        $up       = (Get-Date) - $boot
-        $cpuUso   = (Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average
+        $htmlPath = "$env:TEMP\WiredNet_Reporte_$fecha.html"
+        $pdfPath  = "$env:USERPROFILE\Desktop\WiredNet_Reporte_$fecha.pdf"
 
-        $contenido = @"
-============================================================
-  WiredNet - REPORTE DE DIAGNOSTICO
-  Generado: $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')
-  Tecnico : $env:USERNAME
-============================================================
+        # ── Recopilar datos ──────────────────────────────────────
+        $os      = Get-CimInstance Win32_OperatingSystem
+        $cs      = Get-CimInstance Win32_ComputerSystem
+        $cpu     = Get-CimInstance Win32_Processor | Select-Object -First 1
+        $ram     = [math]::Round($cs.TotalPhysicalMemory / 1GB, 2)
+        $ramLibre= [math]::Round($os.FreePhysicalMemory / 1MB, 2)
+        $boot    = $os.LastBootUpTime
+        $up      = (Get-Date) - $boot
+        $cpuUso  = (Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average
 
-SISTEMA
--------
-Equipo      : $($cs.Name)
-Fabricante  : $($cs.Manufacturer) $($cs.Model)
-OS          : $($os.Caption) $($os.OSArchitecture)
-Version     : $($os.Version) Build $($os.BuildNumber)
-CPU         : $($cpu.Name) ($($cpu.NumberOfCores) nucleos / $($cpu.NumberOfLogicalProcessors) logicos)
-CPU Uso     : $cpuUso %
-RAM Total   : $ram GB
-RAM Libre   : $ramLibre GB
-Ult. Boot   : $($boot.ToString('dd/MM/yyyy HH:mm:ss'))
-Uptime      : $($up.Days)d $($up.Hours)h $($up.Minutes)m
+        $diskRows = (Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -ne $null } | ForEach-Object {
+            $total = [math]::Round(($_.Used + $_.Free)/1GB, 2)
+            $usado = [math]::Round($_.Used/1GB, 2)
+            $libre = [math]::Round($_.Free/1GB, 2)
+            $pct   = if ($total -gt 0) { [math]::Round($usado/$total*100,1) } else { 0 }
+            $color = if ($pct -ge 90) { "#FF4C4C" } elseif ($pct -ge 75) { "#FFA500" } else { "#00C8FF" }
+            "<tr><td><b>$($_.Name):\</b></td><td>$total GB</td><td>$usado GB</td><td>$libre GB</td><td style='color:$color;font-weight:bold'>$pct%</td></tr>"
+        }) -join ""
 
-DISCOS
-------
-$(Get-PSDrive -PSProvider FileSystem | Where-Object { $_.Used -ne $null } |
-    ForEach-Object {
-        $total = [math]::Round(($_.Used + $_.Free)/1GB,2)
-        $usado = [math]::Round($_.Used/1GB,2)
-        $libre = [math]::Round($_.Free/1GB,2)
-        $pct   = if ($total -gt 0) { [math]::Round($usado/$total*100,1) } else { 0 }
-        "$($_.Name):\  Total: $total GB  Usado: $usado GB ($pct%)  Libre: $libre GB"
-    } | Out-String)
+        $ipconfigData = (ipconfig /all | Out-String) -replace "&","&amp;" -replace "<","&lt;" -replace ">","&gt;"
 
-RED
----
-$(ipconfig /all | Out-String)
+        $driversError = Get-WmiObject Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 }
+        $driversRows  = if ($driversError) {
+            ($driversError | ForEach-Object {
+                "<tr><td>$($_.Name -replace '&','&amp;')</td><td style='color:#FF4C4C'>Error $($_.ConfigManagerErrorCode)</td><td>$($_.Status)</td></tr>"
+            }) -join ""
+        } else { "<tr><td colspan='3' style='color:#00C8FF;text-align:center'>✔ Sin drivers con errores</td></tr>" }
 
-EVENTOS CRITICOS (ultimas 24h)
--------------------------------
-$(try {
-    $evs = Get-EventLog -LogName System -EntryType Error -After (Get-Date).AddHours(-24) -Newest 20 -ErrorAction SilentlyContinue
-    if ($evs) { $evs | Format-Table TimeGenerated, Source, EventID, Message -Wrap | Out-String -Width 300 }
-    else { "Sin errores criticos en las ultimas 24h." }
-} catch { "No se pudo leer el Visor de Eventos." })
+        $eventosData = try {
+            $evs = Get-EventLog -LogName System -EntryType Error -After (Get-Date).AddHours(-24) -Newest 15 -ErrorAction Stop
+            if ($evs) {
+                ($evs | ForEach-Object {
+                    "<tr><td>$($_.TimeGenerated.ToString('HH:mm:ss'))</td><td>$($_.Source -replace '&','&amp;')</td><td>$($_.EventID)</td><td>$($_.Message.Split("`n")[0] -replace '&','&amp;' -replace '<','&lt;')</td></tr>"
+                }) -join ""
+            } else { "<tr><td colspan='4' style='color:#00C8FF;text-align:center'>✔ Sin errores críticos en las últimas 24h</td></tr>" }
+        } catch { "<tr><td colspan='4'>No se pudo leer el Visor de Eventos.</td></tr>" }
 
-DRIVERS CON ERRORES
--------------------
-$(Get-WmiObject Win32_PnPEntity | Where-Object { $_.ConfigManagerErrorCode -ne 0 } |
-    Select-Object Name, ConfigManagerErrorCode | Format-Table -AutoSize | Out-String)
+        $avData = try {
+            $av = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction Stop
+            ($av | ForEach-Object { "<tr><td>$($_.displayName)</td><td>$($_.productState)</td></tr>" }) -join ""
+        } catch { "<tr><td colspan='2'>No se pudo leer SecurityCenter2.</td></tr>" }
 
-ANTIVIRUS
----------
-$(try {
-    $av = Get-CimInstance -Namespace root/SecurityCenter2 -ClassName AntiVirusProduct -ErrorAction Stop
-    $av | Select-Object displayName, productState | Format-Table -AutoSize | Out-String
-} catch { "No se pudo leer SecurityCenter2." })
+        # ── Generar HTML ─────────────────────────────────────────
+        $html = @"
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>WiredNet - Reporte de Diagnóstico</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f4f6fa; color: #1a2233; font-size: 12px; }
 
-============================================================
-  Fin del reporte - WiredNet
-============================================================
+  .header { background: linear-gradient(135deg, #0A0E18 0%, #0D1B3E 100%);
+            color: white; padding: 32px 40px; display: flex; align-items: center; gap: 24px; }
+  .header-title { font-size: 28px; font-weight: 700; color: #00C8FF; letter-spacing: 1px; }
+  .header-sub   { font-size: 12px; color: #8B95A8; margin-top: 4px; }
+  .header-meta  { margin-left: auto; text-align: right; font-size: 11px; color: #8B95A8; line-height: 1.8; }
+  .header-meta span { color: #00C8FF; font-weight: 600; }
+
+  .badge { display: inline-block; background: #00C8FF22; border: 1px solid #00C8FF55;
+           color: #00C8FF; padding: 2px 10px; border-radius: 20px; font-size: 10px;
+           font-weight: 600; margin-top: 8px; letter-spacing: 0.5px; }
+
+  .content { padding: 28px 40px; }
+
+  .section { background: white; border-radius: 8px; box-shadow: 0 1px 4px #0001;
+             margin-bottom: 20px; overflow: hidden; border: 1px solid #e5e9f0; }
+  .section-title { background: #0A0E18; color: #00C8FF; font-size: 11px; font-weight: 700;
+                   letter-spacing: 1.5px; padding: 10px 18px; text-transform: uppercase; }
+
+  .info-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+  .info-card { padding: 16px 18px; border-right: 1px solid #f0f2f7; border-bottom: 1px solid #f0f2f7; }
+  .info-card:nth-child(3n) { border-right: none; }
+  .info-label { font-size: 10px; color: #8B95A8; font-weight: 600; text-transform: uppercase;
+                letter-spacing: 0.5px; margin-bottom: 4px; }
+  .info-value { font-size: 13px; font-weight: 600; color: #1a2233; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  thead tr { background: #f8fafc; }
+  th { padding: 9px 14px; text-align: left; font-weight: 600; color: #5A6478;
+       font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;
+       border-bottom: 2px solid #e5e9f0; }
+  td { padding: 9px 14px; border-bottom: 1px solid #f0f2f7; color: #374151; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fbff; }
+
+  pre { background: #0A0E18; color: #00C8FF; padding: 16px 18px; font-size: 10px;
+        font-family: 'Consolas', monospace; overflow: auto; white-space: pre-wrap;
+        word-break: break-all; line-height: 1.6; }
+
+  .footer { text-align: center; padding: 20px; font-size: 10px; color: #8B95A8;
+            border-top: 1px solid #e5e9f0; background: white; margin-top: 8px; }
+  .footer span { color: #00C8FF; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">WiredNet</div>
+    <div class="header-sub">Soporte Técnico · Barranquilla, Colombia</div>
+    <div class="badge">REPORTE DE DIAGNÓSTICO</div>
+  </div>
+  <div class="header-meta">
+    <div>Técnico: <span>$env:USERNAME</span></div>
+    <div>Equipo: <span>$($cs.Name)</span></div>
+    <div>Fecha: <span>$(Get-Date -Format 'dd/MM/yyyy HH:mm')</span></div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="section">
+    <div class="section-title">Información del Sistema</div>
+    <div class="info-grid">
+      <div class="info-card"><div class="info-label">Sistema Operativo</div><div class="info-value">$($os.Caption)</div></div>
+      <div class="info-card"><div class="info-label">Versión / Build</div><div class="info-value">$($os.Version) · Build $($os.BuildNumber)</div></div>
+      <div class="info-card"><div class="info-label">Arquitectura</div><div class="info-value">$($os.OSArchitecture)</div></div>
+      <div class="info-card"><div class="info-label">Fabricante / Modelo</div><div class="info-value">$($cs.Manufacturer) $($cs.Model)</div></div>
+      <div class="info-card"><div class="info-label">Procesador</div><div class="info-value">$($cpu.Name)</div></div>
+      <div class="info-card"><div class="info-label">Núcleos / Lógicos</div><div class="info-value">$($cpu.NumberOfCores) / $($cpu.NumberOfLogicalProcessors)</div></div>
+      <div class="info-card"><div class="info-label">RAM Total</div><div class="info-value">$ram GB</div></div>
+      <div class="info-card"><div class="info-label">RAM Libre</div><div class="info-value">$ramLibre GB</div></div>
+      <div class="info-card"><div class="info-label">Uso CPU</div><div class="info-value">$cpuUso %</div></div>
+      <div class="info-card"><div class="info-label">Último Reinicio</div><div class="info-value">$($boot.ToString('dd/MM/yyyy HH:mm'))</div></div>
+      <div class="info-card"><div class="info-label">Tiempo Encendido</div><div class="info-value">$($up.Days)d $($up.Hours)h $($up.Minutes)m</div></div>
+      <div class="info-card"><div class="info-label">Dominio / Grupo</div><div class="info-value">$($cs.Domain)</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Discos</div>
+    <table><thead><tr><th>Unidad</th><th>Total</th><th>Usado</th><th>Libre</th><th>Uso %</th></tr></thead>
+    <tbody>$diskRows</tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Configuración de Red</div>
+    <pre>$ipconfigData</pre>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Drivers con Errores</div>
+    <table><thead><tr><th>Dispositivo</th><th>Código de Error</th><th>Estado</th></tr></thead>
+    <tbody>$driversRows</tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Eventos Críticos — Últimas 24h</div>
+    <table><thead><tr><th>Hora</th><th>Origen</th><th>ID</th><th>Descripción</th></tr></thead>
+    <tbody>$eventosData</tbody></table>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Antivirus</div>
+    <table><thead><tr><th>Nombre</th><th>Estado</th></tr></thead>
+    <tbody>$avData</tbody></table>
+  </div>
+
+</div>
+
+<div class="footer">
+  Generado por <span>WiredNet Toolkit</span> · <span>wire-net-web.vercel.app</span> · $(Get-Date -Format 'dd/MM/yyyy HH:mm:ss')
+</div>
+
+</body>
+</html>
 "@
-        $contenido | Out-File -FilePath $archivo -Encoding UTF8
-        "Reporte guardado en: $archivo"
+        $html | Out-File -FilePath $htmlPath -Encoding UTF8
+
+        # ── Convertir a PDF con Microsoft Edge ───────────────────
+        $edgePaths = @(
+            "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+            "C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+        )
+        $edge = $edgePaths | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+        if ($edge) {
+            "Generando PDF con Microsoft Edge..."
+            $args = "--headless --disable-gpu --no-sandbox --print-to-pdf=`"$pdfPath`" --print-to-pdf-no-header `"$htmlPath`""
+            Start-Process -FilePath $edge -ArgumentList $args -Wait -WindowStyle Hidden
+            Start-Sleep -Seconds 2
+            if (Test-Path $pdfPath) {
+                "Reporte PDF guardado en:"
+                "  $pdfPath"
+                "Abriendo reporte..."
+                Start-Process $pdfPath
+            } else {
+                "Edge no pudo generar el PDF. Abriendo reporte HTML en su lugar..."
+                Start-Process $htmlPath
+            }
+        } else {
+            "Microsoft Edge no encontrado. Abriendo reporte HTML..."
+            Start-Process $htmlPath
+        }
     }
 })
 
