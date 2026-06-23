@@ -849,11 +849,27 @@ $btnDriversFallidos.Add_Click({
 })
 
 $btnBackupDrivers.Add_Click({
+    # Abrir el selector de carpeta en el hilo de la UI (antes del job)
+    Add-Type -AssemblyName System.Windows.Forms
+    $dialog = New-Object System.Windows.Forms.FolderBrowserDialog
+    $dialog.Description     = "Seleccione la carpeta de destino para el Backup de Drivers"
+    $dialog.ShowNewFolderButton = $true
+    $dialog.SelectedPath    = "$env:USERPROFILE\Desktop"
+
+    $resultado = $dialog.ShowDialog()
+    if ($resultado -ne [System.Windows.Forms.DialogResult]::OK) {
+        $txtConsole.AppendText(">>> Backup de Drivers cancelado por el usuario.`r`n`r`n")
+        $txtConsole.ScrollToEnd()
+        return
+    }
+
+    $rutaElegida = Join-Path $dialog.SelectedPath "WiredNet_Backup_Drivers"
+
     Invoke-WiredNetCommand -Title "Backup de Drivers" -ScriptBlock {
-        $destino = "$env:USERPROFILE\Desktop\WiredNet_Backup_Drivers"
+        param($destino)
         New-Item -ItemType Directory -Path $destino -Force | Out-Null
         "Iniciando backup de drivers..."
-        "Destino: $destino"
+        "Destino seleccionado: $destino"
         "Ejecutando: pnputil /export-driver * ..."
         ""
         $resultado = pnputil /export-driver * "$destino" 2>&1
@@ -861,8 +877,8 @@ $btnBackupDrivers.Add_Click({
         ""
         $total = (Get-ChildItem $destino -Directory -ErrorAction SilentlyContinue).Count
         "Backup completado. Carpetas de drivers exportadas: $total"
-        "Ubicacion: $destino"
-    }
+        "Ubicacion final: $destino"
+    } -ArgumentList $rutaElegida
 })
 
 $btnEventosCriticos.Add_Click({
