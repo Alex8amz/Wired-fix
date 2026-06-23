@@ -284,6 +284,7 @@ if ($scriptDir) {
                         <Button x:Name="btnStartup"        Content="🚀 Programas al Inicio (Startup)"  Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnDrivers"        Content="🖥 Estado de Drivers"              Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnDriversFallidos" Content="⚠ Drivers con Errores"           Width="320" Style="{StaticResource ActionButtonStyle}"/>
+                        <Button x:Name="btnBackupDrivers"  Content="💾 Backup de Drivers"             Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnEventosCriticos" Content="🔴 Errores Criticos (24h)"        Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnEventosWarnings" Content="🟡 Advertencias del Sistema (24h)" Width="320" Style="{StaticResource ActionButtonStyle}"/>
                         <Button x:Name="btnWindowsUpdate"  Content="🔄 Actualizaciones Pendientes"     Width="320" Style="{StaticResource ActionButtonStyle}"/>
@@ -488,6 +489,7 @@ $btnProcesosTop         = $window.FindName("btnProcesosTop")
 $btnStartup             = $window.FindName("btnStartup")
 $btnDrivers             = $window.FindName("btnDrivers")
 $btnDriversFallidos     = $window.FindName("btnDriversFallidos")
+$btnBackupDrivers       = $window.FindName("btnBackupDrivers")
 $btnEventosCriticos     = $window.FindName("btnEventosCriticos")
 $btnEventosWarnings     = $window.FindName("btnEventosWarnings")
 $btnWindowsUpdate       = $window.FindName("btnWindowsUpdate")
@@ -573,7 +575,7 @@ $script:actionButtons = @(
     $btnIpconfig, $btnNetstat, $btnArp, $btnRoute, $btnWifiPerfiles, $btnWifiEscanear,
     $btnPuertosAbiertos, $btnVelocidad, $btnPing, $btnTracert, $btnNslookup, $btnTestPuerto,
     $btnInfoSistema, $btnEspacioDisco, $btnUltimoBoot, $btnUsoRecursos, $btnProcesosTop,
-    $btnStartup, $btnDrivers, $btnDriversFallidos, $btnEventosCriticos, $btnEventosWarnings,
+    $btnStartup, $btnDrivers, $btnDriversFallidos, $btnBackupDrivers, $btnEventosCriticos, $btnEventosWarnings,
     $btnWindowsUpdate, $btnTemperatura, $btnBateria, $btnAntivirus, $btnExportarReporte,
     $btnRefrescarAdaptadores, $btnDhcp, $btnLiberar, $btnRenovar, $btnFlushDns, $btnResetTotal,
     $btnWinsock, $btnTcpIpReset, $btnFirewallReset, $btnProxyReset,
@@ -845,6 +847,24 @@ $btnDriversFallidos.Add_Click({
         } else { "No se encontraron drivers con errores. Todo parece OK." }
     }
 })
+
+$btnBackupDrivers.Add_Click({
+    Invoke-WiredNetCommand -Title "Backup de Drivers" -ScriptBlock {
+        $destino = "$env:USERPROFILE\Desktop\WiredNet_Backup_Drivers"
+        New-Item -ItemType Directory -Path $destino -Force | Out-Null
+        "Iniciando backup de drivers..."
+        "Destino: $destino"
+        "Ejecutando: pnputil /export-driver * ..."
+        ""
+        $resultado = pnputil /export-driver * "$destino" 2>&1
+        $resultado
+        ""
+        $total = (Get-ChildItem $destino -Directory -ErrorAction SilentlyContinue).Count
+        "Backup completado. Carpetas de drivers exportadas: $total"
+        "Ubicacion: $destino"
+    }
+})
+
 $btnEventosCriticos.Add_Click({
     Invoke-WiredNetCommand -Title "Errores criticos (ultimas 24h)" -ScriptBlock {
         $desde = (Get-Date).AddHours(-24)
