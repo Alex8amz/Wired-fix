@@ -218,10 +218,10 @@ cd Wired-fix
 
 ```
 Wired-fix/
-├── WiredNet_GUI.ps1            # Script principal — interfaz y lógica completa
-├── Iniciar_WiredNet_GUI.bat    # Lanzador para uso local
+├── Iniciar_WiredNet_GUI.bat    # Lanzador para uso local (doble clic)
 ├── LOGO_WIRED.png              # Logo de WiredNet
-└── README.md                   # Este archivo
+├── README.md                   # Este archivo
+└── WiredNet_GUI.ps1            # Script principal — interfaz y lógica completa
 ```
 
 ---
