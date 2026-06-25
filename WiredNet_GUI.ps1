@@ -1,6 +1,5 @@
-# ============================================================
 #  WiredNet - Interfaz Grafica de Soporte Tecnico (WPF)
-# ============================================================
+
 
 Add-Type -AssemblyName PresentationFramework, PresentationCore, WindowsBase, System.Xaml
 
@@ -195,35 +194,49 @@ if ($scriptDir) {
             <Setter Property="Foreground" Value="#D0D8E8"/>
             <Setter Property="BorderBrush" Value="#00C8FF"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,5"/>
             <Setter Property="Height" Value="32"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ComboBox">
                         <Grid>
-                            <Border Background="{TemplateBinding Background}"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="4">
-                                <Grid>
-                                    <ContentPresenter Content="{TemplateBinding SelectionBoxItem}"
-                                                      Margin="8,0,28,0"
-                                                      VerticalAlignment="Center"
-                                                      HorizontalAlignment="Left"
-                                                      TextBlock.Foreground="#D0D8E8"/>
-                                    <Path Data="M 0 0 L 6 6 L 12 0 Z"
-                                          Fill="#00C8FF" Width="12" Height="6"
-                                          HorizontalAlignment="Right" VerticalAlignment="Center"
-                                          Margin="0,0,10,0"/>
-                                </Grid>
-                            </Border>
-                            <Popup x:Name="PART_Popup" IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   AllowsTransparency="True" Placement="Bottom"
-                                   MinWidth="{TemplateBinding ActualWidth}">
+                            <ToggleButton x:Name="PART_ToggleButton"
+                                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          Focusable="False" ClickMode="Press">
+                                <ToggleButton.Template>
+                                    <ControlTemplate TargetType="ToggleButton">
+                                        <Border Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                BorderBrush="{Binding BorderBrush, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                                BorderThickness="1" CornerRadius="4">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="28"/>
+                                                </Grid.ColumnDefinitions>
+                                                <Path Grid.Column="1" Data="M 0 0 L 6 6 L 12 0 Z"
+                                                      Fill="#00C8FF" Width="10" Height="5"
+                                                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ToggleButton.Template>
+                            </ToggleButton>
+                            <ContentPresenter x:Name="ContentSite"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              IsHitTestVisible="False"
+                                              Margin="10,0,30,0"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"
+                                              TextBlock.Foreground="#D0D8E8"/>
+                            <Popup x:Name="PART_Popup"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Placement="Bottom"
+                                   MinWidth="{TemplateBinding ActualWidth}"
+                                   Focusable="False">
                                 <Border Background="#1C2130" BorderBrush="#00C8FF"
                                         BorderThickness="1" CornerRadius="0,0,4,4">
-                                    <ScrollViewer MaxHeight="200">
-                                        <ItemsPresenter/>
+                                    <ScrollViewer MaxHeight="220" VerticalScrollBarVisibility="Auto">
+                                        <StackPanel IsItemsHost="True"/>
                                     </ScrollViewer>
                                 </Border>
                             </Popup>
@@ -238,16 +251,27 @@ if ($scriptDir) {
                         <Setter Property="Foreground" Value="#D0D8E8"/>
                         <Setter Property="Padding" Value="10,7"/>
                         <Setter Property="BorderThickness" Value="0"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#00C8FF"/>
-                                <Setter Property="Foreground" Value="#0A0E18"/>
-                            </Trigger>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Background" Value="#163A4E"/>
-                                <Setter Property="Foreground" Value="#00C8FF"/>
-                            </Trigger>
-                        </Style.Triggers>
+                        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ComboBoxItem">
+                                    <Border Background="{TemplateBinding Background}"
+                                            Padding="{TemplateBinding Padding}">
+                                        <ContentPresenter/>
+                                    </Border>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#00C8FF"/>
+                                            <Setter Property="Foreground" Value="#0A0E18"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#163A4E"/>
+                                            <Setter Property="Foreground" Value="#00C8FF"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
                     </Style>
                 </Setter.Value>
             </Setter>
